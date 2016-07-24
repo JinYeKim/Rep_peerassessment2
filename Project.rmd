@@ -68,10 +68,8 @@ Again remove 0 values and tidy up EXP datas.
 EconData <- subset(EconData, (PROPDMG >0 & CROPDMG >0))
 EconData$PROPDMGEXP <- as.character(EconData$PROPDMGEXP)
 EconData$CROPDMGEXP <- as.character(EconData$CROPDMGEXP)
-
 EconData$PROPDMGEXP <- mapvalues(EconData$PROPDMGEXP,c("K","M","B"),c(1000,1000000,1000000000))
 EconData$CROPDMGEXP <- mapvalues(EconData$CROPDMGEXP,c("K","M","B"),c(1000,1000000,1000000000))
-
 EconData$PROPDMGEXP <- sapply(EconData$PROPDMGEXP,as.numeric)
 EconData$CROPDMGEXP <- sapply(EconData$CROPDMGEXP,as.numeric)
 ```
@@ -94,7 +92,7 @@ colnames(EconDF)<- EconPlot$EVTYPE
 1. As seen in the plot below, tornados are most harmful to population health.
 ```{r, cache=TRUE}
 par(mar=c(7,5,1,1))
-barplot(as.matrix(HumanDF),cex.names = .6,col=c("black","red"),las = 2,ylab = "Count of Injuries/Fatalities", legend = c("Injuries","Fatalities"),mgp=c(3,.5,0))
+barplot(as.matrix(FAIN),cex.names = .6,col=c("black","red"),las = 2,ylab = "Count of Injuries/Fatalities", legend = c("Injuries","Fatalities"),mgp=c(3,.5,0))
 ```
 
 2. As seen in the plot below, flooding have the greatest economic consequences. 
