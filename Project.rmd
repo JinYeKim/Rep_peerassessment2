@@ -1,0 +1,105 @@
+---
+title: "Course Project 2"
+author: "Jin Ye Kim"
+date: "July 24 2016"
+---
+
+###Title:
+Exploring NOAA Storm Database and interpreting the data
+
+###Synopsis:
+The basic goal of this assignment is to explore the NOAA Storm Database and answer some basic questions about severe weather events. You must use the database to answer the questions below and show the code for your entire analysis. Your analysis can consist of tables, figures, or other summaries. You may use any R package you want to support your analysis.
+
+###Data Processing
+There should be a section titled Data Processing which describes (in words and code) how the data were loaded into R and processed for analysis. In particular, your analysis must start from the raw CSV file containing the data. You cannot do any preprocessing outside the document. If preprocessing is time-consuming you may consider using the cache = TRUE option for certain code chunks.
+
+Set the working directory and load the data
+```{r}
+StormData <- read.csv("./repdata_data_StormData.csv")
+head(StormData)
+names(StormData)
+```
+
+After looking through the Stormdata, we must process raw data.
+```{r, cache=TRUE}
+StormData$BGN_DATE <- as.Date(StormData$BGN_DATE, format="%m/%d/%Y")
+calss(stormData$BGN_DATE)
+sum(is.na(stormData$BGN_DATE))
+Data<- subset(StormData, BGN_DATE>="1996-01-01")
+```
+
+Question #1
+Let's take a look at injuries and fatalities.
+```{r,cache=TRUE}
+Fatal<- aggregate(FATALITIES ~ EVTYPE, Data, sum)
+Injury <- aggregate(INJURIES ~ EVTYPE, Data, sum)
+ImpactonHuman <- merge(Fatal, Injury, by = "EVTYPE")
+```
+
+Tidy up the data by removing 0 value datas
+```{r, cache=TRUE}
+ImpactonHuman <- subset(ImpactonHuman, (INJURIES >0 & FATALITIES >0))
+ImpactonHuman$Combined <- ImpactonHuman$INJURIES + ImpactonHuman$FATALITIES
+ImpactonHuman <- ImpactonHuman[order(-ImpactonHuman$Combined),]
+head(ImpactonHuman)
+```
+
+Let's graph out this data.
+```{r, cache=TRUE}
+plotdata <- ImpactonHuman[1:10, 1:4]
+plotdata$EVTYPE <- factor(plotdata$EVTYPE)
+INjury <- c(plotdata$INJURIES)
+FAtal <- c(plotdata$FATALITIES)
+FAIN<- data.frame(INjury, FAtal)
+FAIN <- t(FAIN)
+colnames(FAIN) <- plotdata$EVTYPE
+```
+
+Question #2
+Let's take a look at data with economic relations.
+Subset the data.
+```{r, cache=TRUE}
+EconData =data.frame(factor(Data$EVTYPE), Data$PROPDMG, Data$PROPDMGEXP, Data$CROPDMG, Data$CROPDMGEXP)
+colnames(EconData)<- c("EVTYPE", "PROPDMG", "PROPDMGEXP", "CROPDMG", "CROPDMGEXP")
+```
+
+Again remove 0 values and tidy up EXP datas. 
+```{r, cache=TRUE}
+EconData <- subset(EconData, (PROPDMG >0 & CROPDMG >0))
+EconData$PROPDMGEXP <- as.character(EconData$PROPDMGEXP)
+EconData$CROPDMGEXP <- as.character(EconData$CROPDMGEXP)
+
+EconData$PROPDMGEXP <- mapvalues(EconData$PROPDMGEXP,c("K","M","B"),c(1000,1000000,1000000000))
+EconData$CROPDMGEXP <- mapvalues(EconData$CROPDMGEXP,c("K","M","B"),c(1000,1000000,1000000000))
+
+EconData$PROPDMGEXP <- sapply(EconData$PROPDMGEXP,as.numeric)
+EconData$CROPDMGEXP <- sapply(EconData$CROPDMGEXP,as.numeric)
+```
+
+Find the value of damage.
+```{r, cache=TRUE}
+EconData$PROPDMG <- EconData$PROPDMG * EconData$PROPDMGEXP
+EconData$CROPDMG <- EconData$CROPDMG * EconData$CROPDMGEXP
+EconData$EVTYPE <- factor(EconData$EVTYPE)
+PlotEcon <- aggregate(cbind(PROPDMG,CROPDMG) ~ EVTYPE, EconData, sum)
+PlotEcon$TotalDMG <- PlotEcon$PROPDMG + PlotEcon$CROPDMG
+PlotEcon <- PlotEcon[order(-PlotEcon$TotalDMG),]
+PlotEcon <- PlotEcon[1:10, ]
+EconDF <- data.frame(PlotEcon$PROPDMG, PlotEcon$CROPDMG)
+EconDF <- t(EcondDF)
+colnames(EconDF)<- EconPlot$EVTYPE
+```
+
+###Results
+1. As seen in the plot below, tornados are most harmful to population health.
+```{r, cache=TRUE}
+par(mar=c(7,5,1,1))
+barplot(as.matrix(HumanDF),cex.names = .6,col=c("black","red"),las = 2,ylab = "Count of Injuries/Fatalities", legend = c("Injuries","Fatalities"),mgp=c(3,.5,0))
+```
+
+2. As seen in the plot below, flooding have the greatest economic consequences. 
+```{r, cache=TRUE}
+par(mar=c(7,7,1,1))
+barplot(as.matrix(EconDF),cex.names = .6,col=c("black","red"),las = 2,ylab = "Nominal Sum of Damages USD$", legend = c("Property Damage","Crop Damage"),mgp=c(5,.5,0))
+```
+
